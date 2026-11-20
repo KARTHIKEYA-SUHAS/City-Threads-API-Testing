@@ -1,0 +1,66 @@
+info:
+  name: PRODUCT-INFO-TYPES-001 — List Product Info Types Successfully
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/admin/product-info/types"
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const responseText = JSON.stringify(res.body);
+
+        test("Request returns HTTP 200", function () {
+            expect(res.status).to.eql(200);
+        });
+
+        test("Success flag is true", function () {
+            expect(res.body.success).to.eql(true);
+        });
+
+        test("Notification exception is false", function () {
+            expect(res.body.notification.exception).to.eql(false);
+        });
+
+        test("Response data is an array", function () {
+            expect(res.body.data).to.be.an("array");
+        });
+
+        test("Each product info type has the expected structure", function () {
+            res.body.data.forEach(function (item) {
+                expect(item.id).to.be.a("number");
+                expect(item.code).to.be.a("string");
+                expect(item.display_label).to.be.a("string");
+                expect(item.sort_order).to.be.a("number");
+                expect(item.is_active).to.be.a("boolean");
+            });
+        });
+
+        test("Response status code matches HTTP status", function () {
+            expect(res.body.statusCode).to.eql(res.status);
+        });
+
+        test("Response does not expose stack trace", function () {
+            expect(responseText).not.to.match(
+                /stackTrace|at\s+[\w.$]+\(|org\.springframework|org\.apache\.catalina/i
+            );
+        });
+
+        test("Response does not expose sensitive credentials", function () {
+            expect(responseText).not.to.match(
+                /"(password|access_token|refresh_token|authorization)"\s*:/i
+            );
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

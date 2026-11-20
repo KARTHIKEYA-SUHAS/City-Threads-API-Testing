@@ -1,0 +1,7 @@
+info:
+  name: PRODUCT-INFO-GET by ID
+  type: folder
+  seq: 2
+
+request:
+  auth: inherit

@@ -1,0 +1,62 @@
+info:
+  name: PRODUCT-INFO-UPDATE-008 — Update Product Info with Invalid Status
+  type: http
+  seq: 8
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}/api/admin/product-info/:id"
+  params:
+    - name: id
+      value: "{{testProductInfoId}}"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "code": "TKT-40",
+        "name": "TKT 40 Updated",
+        "status": "archived"
+      }
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const responseText = JSON.stringify(res.body);
+
+        test("Invalid status is rejected", function () {
+            expect(res.status).to.be.oneOf([400, 422]);
+        });
+
+        test("Success flag is false", function () {
+            expect(res.body.success).to.eql(false);
+        });
+
+        test("Response does not expose stack trace", function () {
+            expect(responseText).not.to.match(
+                /stackTrace|at\s+[\w.$]+\(|org\.springframework|org\.apache\.catalina/i
+            );
+        });
+
+        test("Response does not expose sensitive credentials", function () {
+            expect(responseText).not.to.match(
+                /"(password|access_token|refresh_token|authorization)"\s*:/i
+            );
+        });
+
+        test("Response status code matches HTTP status when present", function () {
+            if (res.body.statusCode !== undefined) {
+                expect(res.body.statusCode).to.eql(res.status);
+            }
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

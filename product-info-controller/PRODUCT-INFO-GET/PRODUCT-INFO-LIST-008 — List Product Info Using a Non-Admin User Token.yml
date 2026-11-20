@@ -1,0 +1,64 @@
+info:
+  name: PRODUCT-INFO-LIST-008 — List Product Info Using a Non-Admin User Token
+  type: http
+  seq: 8
+  tags:
+    - product-info-controller
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/admin/product-info?type=tkt"
+  params:
+    - name: type
+      value: tkt
+      type: query
+    - name: status
+      value: ""
+      type: query
+      disabled: true
+    - name: search
+      value: ""
+      type: query
+      disabled: true
+  auth:
+    type: bearer
+    token: eyJraWQiOiJsb2NhbC0xIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiIxNSIsInJvbGUiOiJFWEVDVVRJVkUiLCJ0b2tlbl91c2UiOiJhY2Nlc3MiLCJpc3MiOiJjaXR5LXRocmVhZHMiLCJleHAiOjE3OTUyNTU4NzcsImlhdCI6MTc5NTE2OTQ3NywianRpIjoiYjIzMTk1OGUtNjY5Yy00NmZiLWI1OTgtMGNlNzkwMTQzZDZiIiwidXNlcm5hbWUiOiJzdWhhcy5leGUifQ.MNMvSvSzaK3-o41JgiwF4EveGlvy8B4LpNFWAe5Hsxw
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const responseText = JSON.stringify(res.body);
+
+        test("Request returns HTTP 403", function () {
+            expect(res.status).to.eql(403);
+        });
+
+        test("Success flag is false", function () {
+            expect(res.body.success).to.eql(false);
+        });
+
+        test("Response does not expose stack trace", function () {
+            expect(responseText).not.to.match(
+                /stackTrace|at\s+[\w.$]+\(|org\.springframework|org\.apache\.catalina/i
+            );
+        });
+
+        test("Response does not expose sensitive credentials", function () {
+            expect(responseText).not.to.match(
+                /"(password|access_token|refresh_token|authorization)"\s*:/i
+            );
+        });
+
+        test("Response status code matches HTTP status when present", function () {
+            if (res.body.statusCode !== undefined) {
+                expect(res.body.statusCode).to.eql(res.status);
+            }
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

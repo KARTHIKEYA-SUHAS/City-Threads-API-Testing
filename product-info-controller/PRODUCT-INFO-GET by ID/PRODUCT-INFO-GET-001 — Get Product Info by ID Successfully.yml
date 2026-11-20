@@ -1,0 +1,77 @@
+info:
+  name: PRODUCT-INFO-GET-001 — Get Product Info by ID Successfully
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/admin/product-info/:id"
+  params:
+    - name: id
+      value: "{{testProductInfoId}}"
+      type: path
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const responseText = JSON.stringify(res.body);
+
+        test("HTTP status is 200 OK", function () {
+            expect(res.status).to.eql(200);
+        });
+
+        test("Success flag is true", function () {
+            expect(res.body.success).to.eql(true);
+        });
+
+        test("Notification indicates no exception", function () {
+            expect(res.body.notification.exception).to.eql(false);
+        });
+
+        test("Product information data is returned", function () {
+            expect(res.body.data).to.be.an("object");
+        });
+
+        test("Returned product information ID matches requested ID", function () {
+            expect(String(res.body.data.id))
+                .to.eql(String(bru.getEnvVar("testProductInfoId")));
+        });
+
+        test("Product information code is returned", function () {
+            expect(res.body.data.code).to.be.a("string").and.not.empty;
+        });
+
+        test("Product information name is returned", function () {
+            expect(res.body.data.name).to.be.a("string").and.not.empty;
+        });
+
+        test("Product information type is returned", function () {
+            expect(res.body.data.type).to.be.a("string").and.not.empty;
+        });
+
+        test("Response status code matches HTTP status", function () {
+            expect(res.body.statusCode).to.eql(res.status);
+        });
+
+        test("Response does not expose stack trace", function () {
+            expect(responseText).not.to.match(
+                /stackTrace|at\s+[\w.$]+\(|org\.springframework|org\.apache\.catalina/i
+            );
+        });
+
+        test("Response does not expose sensitive credentials", function () {
+            expect(responseText).not.to.match(
+                /"(password|access_token|refresh_token|authorization)"\s*:/i
+            );
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

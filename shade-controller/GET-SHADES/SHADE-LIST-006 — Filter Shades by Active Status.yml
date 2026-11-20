@@ -1,0 +1,72 @@
+info:
+  name: SHADE-LIST-006 — Filter Shades by Active Status
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/admin/shades?status=active"
+  params:
+    - name: status
+      value: active
+      type: query
+    - name: search
+      value: ""
+      type: query
+      disabled: true
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const responseText = JSON.stringify(res.body);
+
+        test("HTTP status is 200", function () {
+            expect(res.status).to.eql(200);
+        });
+
+        test("Success flag is true", function () {
+            expect(res.body.success).to.eql(true);
+        });
+
+        test("Notification has no exception", function () {
+            expect(res.body.notification.exception).to.eql(false);
+        });
+
+        test("Response data is an array", function () {
+            expect(res.body.data).to.be.an("array");
+        });
+
+        test("All returned shades have active status", function () {
+            res.body.data.forEach(function (shade) {
+                expect(shade.status.toLowerCase()).to.eql("active");
+            });
+        });
+
+        test("Response does not expose stack trace", function () {
+            expect(responseText).not.to.match(
+                /stackTrace|at\s+[\w.$]+\(|org\.springframework|org\.apache\.catalina/i
+            );
+        });
+
+        test("Response does not expose sensitive credentials", function () {
+            expect(responseText).not.to.match(
+                /"(password|access_token|refresh_token|authorization)"\s*:/i
+            );
+        });
+
+        test("Response status code matches HTTP status when present", function () {
+            if (res.body.statusCode !== undefined) {
+                expect(res.body.statusCode).to.eql(res.status);
+            }
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

@@ -1,0 +1,62 @@
+info:
+  name: USER-ROLES-004 — Request Using a Non-Admin User Token
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/admin/users/roles"
+  auth:
+    type: bearer
+    token: eyJraWQiOiJsb2NhbC0xIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiIxNSIsInJvbGUiOiJFWEVDVVRJVkUiLCJ0b2tlbl91c2UiOiJhY2Nlc3MiLCJpc3MiOiJjaXR5LXRocmVhZHMiLCJleHAiOjE3OTQ5MDQ4NzUsImlhdCI6MTc5NDgxODQ3NSwianRpIjoiYTFmMzY1MzEtNjk1Ny00ZTQ2LThiNzMtMzJkMjZjZmI1ZjhhIiwidXNlcm5hbWUiOiJzdWhhcy5leGUifQ.hAehw7HdMEGE_8AQXN0auzcuJVGIdTl9rEHPYGN0Y1Y
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const responseText = JSON.stringify(res.body);
+
+        test("HTTP status is 403", function () {
+            expect(res.status).to.eql(403);
+        });
+
+        test("Success flag is false", function () {
+            expect(res.body.success).to.eql(false);
+        });
+
+        test("Notification indicates an exception", function () {
+            expect(res.body.notification.exception).to.eql(true);
+        });
+
+        test("Access denied message is returned", function () {
+            expect(res.body.notification.exceptionMessage).to.eql(
+                "You do not have access to this resource."
+            );
+        });
+
+        test("Role data is not exposed", function () {
+            expect(res.body.data).to.be.oneOf([null, undefined]);
+        });
+
+        test("Response does not expose stack trace", function () {
+            expect(responseText).not.to.match(
+                /stackTrace|at\s+[\w.$]+\(|org\.springframework|org\.apache\.catalina/i
+            );
+        });
+
+        test("Response does not expose sensitive credentials", function () {
+            expect(responseText).not.to.match(
+                /"(password|access_token|refresh_token|authorization)"\s*:/i
+            );
+        });
+
+        test("Response status code matches HTTP status", function () {
+            expect(res.body.statusCode).to.eql(res.status);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

@@ -1,0 +1,72 @@
+info:
+  name: USER-ROLES-001	-- Retrieve user roles with valid admin token
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/admin/users/roles"
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const responseText = JSON.stringify(res.body);
+
+        test("HTTP status is 200", function () {
+            expect(res.status).to.eql(200);
+        });
+
+        test("Success flag is true", function () {
+            expect(res.body.success).to.eql(true);
+        });
+
+        test("Notification indicates no exception", function () {
+            expect(res.body.notification.exception).to.eql(false);
+        });
+
+        test("Success message is returned", function () {
+            expect(res.body.notification.exceptionMessage).to.eql("Roles retrieved successfully");
+        });
+
+        test("Roles are returned as an array", function () {
+            expect(res.body.data).to.be.an("array").that.is.not.empty;
+        });
+
+        test("Role objects contain required fields", function () {
+            res.body.data.forEach(function (role) {
+                expect(role).to.have.all.keys("id", "code", "name", "description");
+            });
+        });
+
+        test("Administrator and Executive roles are present", function () {
+            const roleCodes = res.body.data.map(role => role.code);
+            expect(roleCodes).to.include("ADMIN");
+            expect(roleCodes).to.include("EXECUTIVE");
+        });
+
+        test("Response does not expose stack trace", function () {
+            expect(responseText).not.to.match(
+                /stackTrace|at\s+[\w.$]+\(|org\.springframework|org\.apache\.catalina/i
+            );
+        });
+
+        test("Response does not expose sensitive credentials", function () {
+            expect(responseText).not.to.match(
+                /"(password|access_token|refresh_token|authorization)"\s*:/i
+            );
+        });
+
+        test("Response status code matches HTTP status", function () {
+            expect(res.body.statusCode).to.eql(res.status);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

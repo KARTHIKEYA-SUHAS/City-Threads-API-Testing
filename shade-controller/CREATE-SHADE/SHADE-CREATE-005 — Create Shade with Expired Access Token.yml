@@ -1,0 +1,58 @@
+info:
+  name: SHADE-CREATE-005 — Create Shade with Expired Access Token
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/admin/shades"
+  body:
+    type: json
+    data: |-
+      {
+        "code": "SHD-007",
+        "name": "Expired Token Shade",
+        "status": "active"
+      }
+  auth:
+    type: bearer
+    token: eyJraWQiOiJsb2NhbC0xIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiIxNSIsInJvbGUiOiJFWEVDVVRJVkUiLCJ0b2tlbl91c2UiOiJhY2Nlc3MiLCJpc3MiOiJjaXR5LXRocmVhZHMiLCJleHAiOjE3OTUyNTc4MDcsImlhdCI6MTc5NTE3MTQwNywianRpIjoiY2ZmMzIyYzUtNGIyMC00NTg5LWJlMTYtMTU2NTJiMDE4NTMyIiwidXNlcm5hbWUiOiJzdWhhcy5leGUifQ.Z1mKzMOZo3qjZJtVbOp5eHuta707CW6WYTa0y0ODnuE
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const responseText = JSON.stringify(res.body);
+
+        test("Request returns HTTP 401", function () {
+            expect(res.status).to.eql(401);
+        });
+
+        test("Success flag is false", function () {
+            expect(res.body.success).to.eql(false);
+        });
+
+        test("Response does not expose stack trace", function () {
+            expect(responseText).not.to.match(
+                /stackTrace|at\s+[\w.$]+\(|org\.springframework|org\.apache\.catalina/i
+            );
+        });
+
+        test("Response does not expose sensitive credentials", function () {
+            expect(responseText).not.to.match(
+                /"(password|access_token|refresh_token|authorization)"\s*:/i
+            );
+        });
+
+        test("Response status code matches HTTP status when present", function () {
+            if (res.body.statusCode !== undefined) {
+                expect(res.body.statusCode).to.eql(res.status);
+            }
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

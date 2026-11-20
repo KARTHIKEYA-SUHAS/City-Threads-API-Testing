@@ -1,0 +1,72 @@
+info:
+  name: PRODUCT-INFO-UPDATE-001 — Update Product Info Successfully
+  type: http
+  seq: 1
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}/api/admin/product-info/:id"
+  params:
+    - name: id
+      value: "{{testProductInfoId}}"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "status": "inactive"
+      }
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const responseText = JSON.stringify(res.body);
+
+        test("HTTP status is successful", function () {
+            expect(res.status).to.be.oneOf([200, 204]);
+        });
+
+        test("Success flag is true", function () {
+            expect(res.body.success).to.eql(true);
+        });
+
+        test("Notification does not indicate an exception", function () {
+            expect(res.body.notification.exception).to.eql(false);
+        });
+
+        test("Updated product info data is returned when present", function () {
+            if (res.body.data !== undefined && res.body.data !== null) {
+                expect(res.body.data).to.be.an("object");
+                expect(res.body.data.id).to.eql(Number(bru.getEnvVar("testProductInfoId")));
+                expect(res.body.data.name).to.eql("TKT 40 Updated");
+            }
+        });
+
+        test("Response status code matches HTTP status when present", function () {
+            if (res.body.statusCode !== undefined) {
+                expect(res.body.statusCode).to.eql(res.status);
+            }
+        });
+
+        test("Response does not expose stack trace", function () {
+            expect(responseText).not.to.match(
+                /stackTrace|at\s+[\w.$]+\(|org\.springframework|org\.apache\.catalina/i
+            );
+        });
+
+        test("Response does not expose sensitive credentials", function () {
+            expect(responseText).not.to.match(
+                /"(password|access_token|refresh_token|authorization)"\s*:/i
+            );
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

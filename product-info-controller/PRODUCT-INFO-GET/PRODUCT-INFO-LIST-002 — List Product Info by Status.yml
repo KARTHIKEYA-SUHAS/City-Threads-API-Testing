@@ -1,0 +1,75 @@
+info:
+  name: PRODUCT-INFO-LIST-002 — List Product Info by Status
+  type: http
+  seq: 2
+  tags:
+    - product-info-controller
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/admin/product-info?type=article&status=active"
+  params:
+    - name: type
+      value: article
+      type: query
+    - name: status
+      value: active
+      type: query
+    - name: search
+      value: ""
+      type: query
+      disabled: true
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const responseText = JSON.stringify(res.body);
+
+        test("Request returns HTTP 200", function () {
+            expect(res.status).to.eql(200);
+        });
+
+        test("Success flag is true", function () {
+            expect(res.body.success).to.eql(true);
+        });
+
+        test("Notification indicates no exception", function () {
+            expect(res.body.notification.exception).to.eql(false);
+        });
+
+        test("Product Info data is an array", function () {
+            expect(res.body.data).to.be.an("array");
+        });
+
+        test("All returned records match the active status filter", function () {
+            res.body.data.forEach(function (item) {
+                expect(item.status.toLowerCase()).to.be.oneOf(["active", "inactive"]);
+            });
+        });
+
+        test("Response status code matches HTTP status", function () {
+            expect(res.body.statusCode).to.eql(res.status);
+        });
+
+        test("Response does not expose stack trace", function () {
+            expect(responseText).not.to.match(
+                /stackTrace|at\s+[\w.$]+\(|org\.springframework|org\.apache\.catalina/i
+            );
+        });
+
+        test("Response does not expose sensitive credentials", function () {
+            expect(responseText).not.to.match(
+                /"(password|access_token|refresh_token|authorization)"\s*:/i
+            );
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

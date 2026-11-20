@@ -1,0 +1,53 @@
+info:
+  name: USER-ROLES-002 — Request Without Authorization Token
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/admin/users/roles"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const responseText = JSON.stringify(res.body);
+
+        test("HTTP status is 401", function () {
+            expect(res.status).to.eql(401);
+        });
+
+        test("Request is rejected", function () {
+            expect(res.body.success).to.eql(false);
+        });
+
+        test("Exception is indicated", function () {
+            expect(res.body.notification.exception).to.eql(true);
+        });
+
+        test("Role data is not exposed", function () {
+            expect(res.body.data).to.be.oneOf([null, undefined]);
+        });
+
+        test("Response does not expose stack trace", function () {
+            expect(responseText).not.to.match(
+                /stackTrace|at\s+[\w.$]+\(|org\.springframework|org\.apache\.catalina/i
+            );
+        });
+
+        test("Response does not expose sensitive credentials", function () {
+            expect(responseText).not.to.match(
+                /"(password|access_token|refresh_token|authorization)"\s*:/i
+            );
+        });
+
+        test("Response status code matches HTTP status", function () {
+            expect(res.body.statusCode).to.eql(res.status);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

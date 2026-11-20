@@ -1,0 +1,73 @@
+info:
+  name: PRODUCT-INFO-LIST-005 — List Product Info with Search That Has No Matches
+  type: http
+  seq: 5
+  tags:
+    - product-info-controller
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/admin/product-info?type=tkt&search=NO-MATCH-XYZ-999"
+  params:
+    - name: type
+      value: tkt
+      type: query
+    - name: status
+      value: ""
+      type: query
+      disabled: true
+    - name: search
+      value: NO-MATCH-XYZ-999
+      type: query
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const responseText = JSON.stringify(res.body);
+
+        test("Request returns HTTP 200", function () {
+            expect(res.status).to.eql(200);
+        });
+
+        test("Success flag is true", function () {
+            expect(res.body.success).to.eql(true);
+        });
+
+        test("Notification exception is false", function () {
+            expect(res.body.notification.exception).to.eql(false);
+        });
+
+        test("Response data is an array", function () {
+            expect(res.body.data).to.be.an("array");
+        });
+
+        test("No matching records are returned", function () {
+            expect(res.body.data).to.have.lengthOf(0);
+        });
+
+        test("Response status code matches HTTP status", function () {
+            expect(res.body.statusCode).to.eql(res.status);
+        });
+
+        test("Response does not expose stack trace", function () {
+            expect(responseText).not.to.match(
+                /stackTrace|at\s+[\w.$]+\(|org\.springframework|org\.apache\.catalina/i
+            );
+        });
+
+        test("Response does not expose sensitive credentials", function () {
+            expect(responseText).not.to.match(
+                /"(password|access_token|refresh_token|authorization)"\s*:/i
+            );
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

@@ -1,0 +1,7 @@
+info:
+  name: PRODUCT-INFO-CREATE
+  type: folder
+  seq: 1
+
+request:
+  auth: inherit

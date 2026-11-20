@@ -1,0 +1,69 @@
+info:
+  name: PRODUCT-INFO-CREATE-006 — Create with Missing Required Fields
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/admin/product-info"
+  body:
+    type: json
+    data: |-
+      {
+        "code": "",
+        "name": "",
+        "type": "",
+        "status": ""
+      }
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const responseText = JSON.stringify(res.body);
+
+        test("HTTP status indicates validation failure", function () {
+            expect(res.status).to.be.oneOf([400, 422]);
+        });
+
+        test("Success flag is false", function () {
+            expect(res.body.success).to.eql(false);
+        });
+
+        test("Notification indicates an exception", function () {
+            expect(res.body.notification.exception).to.eql(true);
+        });
+
+        test("Validation error message is returned", function () {
+            expect(res.body.notification.exceptionMessage).to.be.a("string").that.is.not.empty;
+        });
+
+        test("Product information is not created", function () {
+            expect(res.body.data).to.be.oneOf([null, undefined]);
+        });
+
+        test("Response does not expose stack trace", function () {
+            expect(responseText).not.to.match(
+                /stackTrace|at\s+[\w.$]+\(|org\.springframework|org\.apache\.catalina/i
+            );
+        });
+
+        test("Response does not expose sensitive credentials", function () {
+            expect(responseText).not.to.match(
+                /"(password|access_token|refresh_token|authorization)"\s*:/i
+            );
+        });
+
+        test("Response status code matches HTTP status", function () {
+            expect(res.body.statusCode).to.eql(res.status);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

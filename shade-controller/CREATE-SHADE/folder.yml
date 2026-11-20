@@ -1,0 +1,7 @@
+info:
+  name: CREATE-SHADE
+  type: folder
+  seq: 1
+
+request:
+  auth: inherit

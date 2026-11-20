@@ -1,0 +1,82 @@
+info:
+  name: SHADE-CREATE-001 — Create Shade Successfully
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/admin/shades"
+  body:
+    type: json
+    data: |-
+      {
+        "code": "SHD-003",
+        "name": "Testting Shade",
+        "status": "active"
+      }
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const responseText = JSON.stringify(res.body);
+
+        test("Request returns successful creation status", function () {
+            expect(res.status).to.be.oneOf([200, 201]);
+        });
+
+        test("Response status code matches HTTP status", function () {
+            expect(res.body.statusCode).to.eql(res.status);
+        });
+
+        test("Success flag is true", function () {
+            expect(res.body.success).to.eql(true);
+        });
+
+        test("Notification exception is false", function () {
+            expect(res.body.notification.exception).to.eql(false);
+        });
+
+        test("Created shade has a valid ID", function () {
+            expect(res.body.data.id).to.be.a("number");
+        });
+
+        test("Created shade details match the request", function () {
+            expect(res.body.data.code).to.eql("SHD-003");
+            expect(res.body.data.name).to.eql("Testting Shade");
+            expect(res.body.data.status.toLowerCase()).to.eql("active");
+        });
+
+        test("Response status code matches HTTP status", function () {
+            expect(res.body.statusCode).to.eql(res.status);
+        });
+
+        test("Response does not expose stack trace", function () {
+            expect(responseText).not.to.match(
+                /stackTrace|at\s+[\w.$]+\(|org\.springframework|org\.apache\.catalina/i
+            );
+        });
+
+        test("Response does not expose sensitive credentials", function () {
+            expect(responseText).not.to.match(
+                /"(password|access_token|refresh_token|authorization)"\s*:/i
+            );
+        });
+
+        if (
+            res.body.success === true &&
+            res.body.data &&
+            typeof res.body.data.id === "number"
+        ) {
+            bru.setEnvVar("testShadeId", String(res.body.data.id));
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

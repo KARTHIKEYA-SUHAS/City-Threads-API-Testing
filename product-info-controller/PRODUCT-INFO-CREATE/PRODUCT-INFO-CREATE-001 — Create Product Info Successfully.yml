@@ -1,0 +1,103 @@
+info:
+  name: PRODUCT-INFO-CREATE-001 — Create Product Info Successfully
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/admin/product-info"
+  body:
+    type: json
+    data: |-
+      {
+        "code": "TST-001",
+        "name": "Test product",
+        "type": "article",
+        "status": "active"
+      }
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const responseText = JSON.stringify(res.body);
+
+        test("HTTP status is 201 Created", function () {
+            expect(res.status).to.eql(201);
+        });
+
+        test("Success flag is true", function () {
+            expect(res.body.success).to.eql(true);
+        });
+
+        test("Notification indicates no exception", function () {
+            expect(res.body.notification.exception).to.eql(false);
+        });
+
+        test("Creation success message is returned", function () {
+            expect(res.body.notification.exceptionMessage).to.eql(
+                "Product information created successfully"
+            );
+        });
+
+        test("Created product info has a valid ID", function () {
+            expect(res.body.data.id).to.be.a("number");
+            expect(res.body.data.id).to.be.greaterThan(0);
+        });
+
+        test("Created product info contains required fields", function () {
+            expect(res.body.data).to.have.all.keys(
+                "id",
+                "code",
+                "name",
+                "type",
+                "in_use",
+                "status",
+                "created_at",
+                "updated_at"
+            );
+        });
+
+        test("Created product info fields have valid values", function () {
+            expect(res.body.data.code).to.be.a("string").that.is.not.empty;
+            expect(res.body.data.name).to.be.a("string").that.is.not.empty;
+            expect(res.body.data.type).to.be.a("string").that.is.not.empty;
+            expect(res.body.data.status).to.eql("active");
+            expect(res.body.data.in_use).to.eql(0);
+        });
+
+        test("Response does not expose stack trace", function () {
+            expect(responseText).not.to.match(
+                /stackTrace|at\s+[\w.$]+\(|org\.springframework|org\.apache\.catalina/i
+            );
+        });
+
+        test("Response does not expose sensitive credentials", function () {
+            expect(responseText).not.to.match(
+                /"(password|access_token|refresh_token|authorization)"\s*:/i
+            );
+        });
+
+        test("Response status code matches HTTP status", function () {
+            expect(res.body.statusCode).to.eql(res.status);
+        });
+
+        // Save created Product Info ID into environment
+        test("Created Product Info ID is saved to environment", function () {
+            const productInfoId = res.body.data && res.body.data.id;
+
+            expect(productInfoId).to.be.a("number");
+            expect(productInfoId).to.be.greaterThan(0);
+
+            bru.setEnvVar("testProductInfoId", String(productInfoId));
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

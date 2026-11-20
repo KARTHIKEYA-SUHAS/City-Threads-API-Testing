@@ -16,7 +16,7 @@ http:
     type: json
     data: |-
       {
-        "email": "karthikeyasuhas2@gmail.com"
+        "email": "karthikeyasuhas1@gmail.com"
       }
   auth:
     type: bearer

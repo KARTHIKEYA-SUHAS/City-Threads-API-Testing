@@ -1,0 +1,70 @@
+info:
+  name: PRODUCT-INFO-CREATE-012 — Create with Duplicate Product Info Code
+  type: http
+  seq: 12
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/admin/product-info"
+  body:
+    type: json
+    data: |-
+      {
+        "code": "TKT-40",
+        "name": "Duplicate TKT 40",
+        "type": "tkt",
+        "status": "active"
+      }
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const responseText = JSON.stringify(res.body);
+
+        test("HTTP status is 400 Bad Request", function () {
+            expect(res.status).to.eql(400);
+        });
+
+        test("Success flag is false", function () {
+            expect(res.body.success).to.eql(false);
+        });
+
+        test("Notification indicates an exception", function () {
+            expect(res.body.notification.exception).to.eql(true);
+        });
+
+        test("Duplicate code error message is returned", function () {
+            expect(res.body.notification.exceptionMessage)
+                .to.eql("This code is already in use.");
+        });
+
+        test("No product information is created", function () {
+            expect(res.body.data).to.be.oneOf([null, undefined]);
+        });
+
+        test("Response status code matches HTTP status", function () {
+            expect(res.body.statusCode).to.eql(res.status);
+        });
+
+        test("Response does not expose stack trace", function () {
+            expect(responseText).not.to.match(
+                /stackTrace|at\s+[\w.$]+\(|org\.springframework|org\.apache\.catalina/i
+            );
+        });
+
+        test("Response does not expose sensitive credentials", function () {
+            expect(responseText).not.to.match(
+                /"(password|access_token|refresh_token|authorization)"\s*:/i
+            );
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

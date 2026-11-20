@@ -1,0 +1,7 @@
+info:
+  name: PRODUCT-INFO-UPDATE
+  type: folder
+  seq: 3
+
+request:
+  auth: inherit
